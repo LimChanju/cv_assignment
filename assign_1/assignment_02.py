@@ -35,7 +35,8 @@ def main():
     global brush_size
     
     # 그릴 수 있는 캔버스 생성 (600x800 크기, 흰색 배경)
-    img = np.ones((600, 800, 3), dtype=np.uint8) * 255
+    img_path = 'soccer.jpg' # 이미지 경로 설정
+    img = cv.imread(img_path) # 이미지 로드
     window_name = 'Drawing Canvas'
     
     cv.namedWindow(window_name)
