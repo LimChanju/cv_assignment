@@ -61,9 +61,9 @@ if __name__ == "__main__":
 </div>
 </details>
 
-* **중간 결과물:** ![흑백으로 변환한 이미지](L01_Introduction_of_CV_and_OpenCV/img/soccer_gray.jpg)
+* **중간 결과물:** ![흑백으로 변환한 이미지](img/soccer_gray.jpg)
 * **최종 결과물:**
-  ![합성된 결과 화면](L01_Introduction_of_CV_and_OpenCV/img/assignment_01_result_img.png)
+  ![합성된 결과 화면](img/assignment_01_result_img.png)
 
 ## 과제 2: 페인팅 붓 크기 조절 기능 추가 🖌️
 * **배경 지식:**
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 </details>
 
 * **최종 결과물 (크기 조절 및 드래그 적용):**
-  ![최종 드로잉 결과](L01_Introduction_of_CV_and_OpenCV/img/assignment_02_result.png)
+  ![최종 드로잉 결과](img/assignment_02_result.png)
 
 ## 과제 3: 마우스로 영역 선택 및 ROI 추출 👀
 * **배경 지식:**
@@ -321,7 +321,7 @@ if __name__ == "__main__":
 </details>
 
 * **중간 결과물 (영역 드래그 중):**
-  ![드래그 중인 화면](L01_Introduction_of_CV_and_OpenCV/img/assignment_03_intermediate_img.png)
+  ![드래그 중인 화면](img/assignment_03_intermediate_img.png)
   
 * **최종 결과물 (추출 및 저장된 ROI):**
-  ![저장된 ROI 이미지](L01_Introduction_of_CV_and_OpenCV/img/extracted_roi.jpg)
+  ![저장된 ROI 이미지](img/extracted_roi.jpg)
