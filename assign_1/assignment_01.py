@@ -8,7 +8,7 @@ def main():
     
     # 이미지 제대로 로드되었는지 확인
     if img is None:
-        print(f"에러: '{img_path}' 이미지를 불러올 수 없습니다. 파일 경로를 다시 확인하세요.")
+        print(f"에러: '{img_path}' 이미지를 불러올 수 없습니다. 파일 경로를 다시 확인하세요.") # 이미지가 제대로 로드되지 않았을 경우 에러 메시지 출력
         return
     
     # 2. 그레이스케일 변환
@@ -24,7 +24,7 @@ def main():
     
     # 5. 결과 이미지 출력 및 키 입력 대기
     cv.namedWindow('Original and Grayscale Image', cv.WINDOW_NORMAL) # 창 크기 조절 가능하게 설정
-    cv.imshow('Original and Grayscale Image', combined_img)
+    cv.imshow('Original and Grayscale Image', combined_img) # Original and Grayscale Image 창에 combined_img 표시
     cv.waitKey(0) # 키 입력 대기
     cv.destroyAllWindows() # 모든 창 닫기
     

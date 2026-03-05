@@ -8,28 +8,28 @@ start_x, start_y = -1, -1 # 드로잉 시작 좌표
 roi_img = None # ROI 이미지 저장 변수
 
 # 원본 이미지를 복사해 둘 변수 (초기화용)
-clone = None
-img = None
+clone = None # 원본 이미지의 복사본, 드로잉 시 원본 훼손 방지용
+img = None # 현재 드로잉 중인 이미지 (원본에서 드로잉이 적용된 버전)
 
 def mouse_callback(event, x, y, flags, param):
-    global is_dragging, start_x, start_y, img, clone, roi_img
+    global is_dragging, start_x, start_y, img, clone, roi_img # 마우스 콜백 함수에서 사용할 전역 변수들
     
     # 1. 좌클릭 : 드래그 시작점 저장
     if event == cv.EVENT_LBUTTONDOWN:
-        is_dragging = True
-        start_x, start_y = x, y
+        is_dragging = True # 드래그 시작
+        start_x, start_y = x, y # 드래그 시작 좌표 저장
         
     # 2. 마우스 이동 : 드래그 중일 때 사각형 시각화
     elif event == cv.EVENT_MOUSEMOVE:
         if is_dragging:
             # 원본 이미지가 훼손되지 않도록 clone본을 복사해서 그 위에 그림
-            img_draw = clone.copy()
+            img_draw = clone.copy() # 드로잉 시 원본 훼손 방지용 복사본
             cv.rectangle(img_draw, (start_x, start_y), (x, y), (0, 255, 0), 2) # 녹색 사각형 그리기
-            cv.imshow('ROI Selector', img_draw)
+            cv.imshow('ROI Selector', img_draw) # 드로잉된 이미지 실시간으로 또 다른 창을 띄워 보여주기
             
     # 3. 좌클릭 해제 : 드래그 종료 및 ROI 추출
     elif event == cv.EVENT_LBUTTONUP:
-        is_dragging = False
+        is_dragging = False # 드래그 종료
         
         # 드래그 방향에 상관없이 슬라이싱이 가능하도록 최소/최대 좌표 계산
         min_x, max_x = min(start_x, x), max(start_x, x)
@@ -44,7 +44,7 @@ def mouse_callback(event, x, y, flags, param):
         
         # 원본 이미지에서 ROI 영역만큼 사각형을 확정해서 그림
         cv.rectangle(img, (min_x, min_y), (max_x, max_y), (0, 0, 255), 2) # 빨간색 사각형으로 최종 ROI 표시
-        cv.imshow('ROI Selector', img)
+        cv.imshow('ROI Selector', img) # 최종 ROI가 그려진 이미지 출력
         
         # Numpy 슬라이싱을 이용한 ROI 추출 (배열은 y, x 순서로 인덱싱)
         roi_img = clone[min_y:max_y, min_x:max_x]
@@ -53,7 +53,7 @@ def mouse_callback(event, x, y, flags, param):
         cv.imshow('Extracted ROI', roi_img)
         
 def main():
-    global img, clone, roi_img
+    global img, clone, roi_img # main 함수 내 while 루프 안에서 사용할 전역 변수들
     
     # 1. 이미지 로드
     img_path = 'soccer.jpg' # 이미지 경로 설정
@@ -66,7 +66,7 @@ def main():
     # 2. 원본 이미지 보존을 위해 clone 생성
     clone = img.copy()
     
-    cv.namedWindow('ROI Selector')
+    cv.namedWindow('ROI Selector') # ROI Selector 창 생성
     cv.setMouseCallback('ROI Selector', mouse_callback) # 마우스 콜백 함수 등록
     
     print("마우스로 드래그하여 ROI를 선택하세요. (q: 종료 / r: 리셋 / s: 저장)")
@@ -74,9 +74,9 @@ def main():
     while True:
         # 최초 1회 또는 화면이 업데이트되지 않을 때 원본 출력용
         if not is_dragging:
-            cv.imshow('ROI Selector', img)
+            cv.imshow('ROI Selector', img) # 드로잉이 없는 경우 원본 이미지 출력
             
-        key = cv.waitKey(1) & 0xFF
+        key = cv.waitKey(1) & 0xFF # 키 입력 대기
         
         # 'r' 키를 누르면 선택 영역 리셋
         if key == ord('r'):

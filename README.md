@@ -18,7 +18,7 @@
 * **중간 결과물 (클릭 및 키보드 입력 테스트):**
   ![키보드 입력 테스트](assign_1/assignment_02_keyboard_input_test.png)
 * **최종 결과물 (크기 조절 및 드래그 적용):**
-  ![최종 드로잉 결과](assign_1/assignment_02_result_img.png)
+  ![최종 드로잉 결과](assign_1/assignment_02_result.png)
 
 ## 과제 3: 마우스로 영역 선택 및 ROI 추출
 * **설명:** 드래그하여 관심 영역(ROI)을 지정하고, 이를 잘라내어 별도의 창에 띄우거나 파일로 저장합니다.

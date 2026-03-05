@@ -2,29 +2,29 @@ import cv2 as cv
 import numpy as np
 
 # 상태를 추적하기 위한 전역 변수 설정
-brush_size = 5
-is_drawing = False
-current_color = (255, 0, 0) # 초기 색상은 파란색 (BGR 기준)
+brush_size = 5 # 붓 크기 초기값
+is_drawing = False # 그리기 상태 추적
+current_color = (255, 0, 0) # 초기 색상은 파란색으로 설정
 
 def mouse_callback(event, x, y, flags, param):
-    global brush_size, is_drawing, current_color
+    global brush_size, is_drawing, current_color # 전역 변수를 활용하여 main함수의 while 루프 간의 상태 동기화
     
     img = param # 메인 함수에서 전달받은 캔버스 이미지
     
     # 좌클릭 : 파란색 그리기 시작
     if event == cv.EVENT_LBUTTONDOWN:
-        is_drawing = True
-        current_color = (255, 0, 0) # 파란색
+        is_drawing = True # 그리기 시작
+        current_color = (255, 0, 0) # 파란색으로 설정 (초기값과 같음)
         cv.circle(img, (x, y), brush_size, current_color, -1) # 원 그리기 (채우기)
 
     # 우클릭 : 빨간색 그리기 시작
     elif event == cv.EVENT_RBUTTONDOWN:
-        is_drawing = True
-        current_color = (0, 0, 255) # 빨간색
+        is_drawing = True # 그리기 시작
+        current_color = (0, 0, 255) # 빨간색으로 설정
         cv.circle(img, (x, y), brush_size, current_color, -1) # 원 그리기 (채우기)
         
     # 드래그 중 : 현재 설정된 색상과 붓 크기로 연속 그리기
-    elif event == cv.EVENT_MOUSEMOVE and is_drawing:
+    elif event == cv.EVENT_MOUSEMOVE and is_drawing: # 마우스가 이동 중이고 그리기 상태인 경우
         cv.circle(img, (x, y), brush_size, current_color, -1) # 원 그리기 (채우기)
         
     # 클릭 해제 시 그리기 종료
@@ -32,14 +32,14 @@ def mouse_callback(event, x, y, flags, param):
         is_drawing = False
         
 def main():
-    global brush_size
+    global brush_size # main 함수에서 키보드 입력을 통해 붓 크기를 조절하기 위해 전역 변수로 선언
     
     # 그릴 수 있는 캔버스 생성 (600x800 크기, 흰색 배경)
     img_path = 'soccer.jpg' # 이미지 경로 설정
     img = cv.imread(img_path) # 이미지 로드
-    window_name = 'Drawing Canvas'
+    window_name = 'Drawing Canvas' # 창 이름 설정
     
-    cv.namedWindow(window_name)
+    cv.namedWindow(window_name) # 창 생성
     
     # 마우스 콜백 함수 등록 (img 객체 -> param으로 전달)
     cv.setMouseCallback(window_name, mouse_callback, param=img)
