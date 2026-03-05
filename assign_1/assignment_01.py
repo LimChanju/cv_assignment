@@ -15,7 +15,7 @@ def main():
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY) # 그레이스케일로 변환
     print(gray.shape) # 그레이스케일 이미지의 shape 출력 (높이, 너비)
     
-    save_path = 'soccer_gray.jpg' # 그레이스케일 이미지 저장 경로 설정
+    save_path = 'assign_1/soccer_gray.jpg' # 그레이스케일 이미지 저장 경로 설정
     is_saved = cv.imwrite(save_path, gray) # 그레이스케일 이미지 저장
     if is_saved:
         print(f"그레이스케일 이미지가 '{save_path}'로 저장되었습니다.") # 이미지 저장 성공 메시지 출력
