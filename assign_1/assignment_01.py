@@ -15,6 +15,13 @@ def main():
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY) # 그레이스케일로 변환
     print(gray.shape) # 그레이스케일 이미지의 shape 출력 (높이, 너비)
     
+    save_path = 'soccer_gray.jpg' # 그레이스케일 이미지 저장 경로 설정
+    is_saved = cv.imwrite(save_path, gray) # 그레이스케일 이미지 저장
+    if is_saved:
+        print(f"그레이스케일 이미지가 '{save_path}'로 저장되었습니다.") # 이미지 저장 성공 메시지 출력
+    else:
+        print(f"에러: '{save_path}' 경로에 이미지를 저장할 수 없습니다.") # 이미지 저장에 실패한 경우 에러 메시지 출력
+
     # 3. np.hstack()을 위한 차원 맞추기
     # 1채널(gray) 이미지를 3채널로 형태만 변경. 색상은 흑백으로 유지
     gray_3ch = cv.cvtColor(gray, cv.COLOR_GRAY2BGR)
