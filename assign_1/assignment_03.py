@@ -16,7 +16,7 @@ def mouse_callback(event, x, y, flags, param):
     
     # 1. 좌클릭 : 드래그 시작점 저장
     if event == cv.EVENT_LBUTTONDOWN:
-        is_drawing = True
+        is_dragging = True
         start_x, start_y = x, y
         
     # 2. 마우스 이동 : 드래그 중일 때 사각형 시각화
@@ -38,6 +38,9 @@ def mouse_callback(event, x, y, flags, param):
         # 클릭만 하고 드래그를 안 했을 경우(면적이 0) 예외 처리
         if min_x == max_x or min_y == max_y:
             return
+        
+        # 이전 빨간 사각형들의 잔상을 없애기 위해 도화지를 원본으로 초기화
+        img = clone.copy()
         
         # 원본 이미지에서 ROI 영역만큼 사각형을 확정해서 그림
         cv.rectangle(img, (min_x, min_y), (max_x, max_y), (0, 0, 255), 2) # 빨간색 사각형으로 최종 ROI 표시
