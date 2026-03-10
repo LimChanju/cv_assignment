@@ -5,6 +5,7 @@
 * **배경 지식:**
 <img width="1244" height="682" alt="image" src="https://github.com/user-attachments/assets/0d85257f-d35e-4cef-9249-e143bac849e0" />
 * **주요 구현 포인트:** `np.hstack()`을 사용하여 이미지를 병합할 때 배열의 차원(shape)을 일치시키는 것이 중요합니다. 1채널인 그레이스케일 이미지를 배열 병합이 가능하도록 3채널 차원으로 변환(`cv.COLOR_GRAY2BGR`)하여 차원 불일치 에러를 방지했습니다.
+
 * **핵심 코드:**
 ```python
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY) # 그레이스케일로 변환
@@ -14,7 +15,8 @@ gray_3ch = cv.cvtColor(gray, cv.COLOR_GRAY2BGR) # 1ch img를 3ch shape으로만 
 combined_img = np.hstack((img, gray_3ch)) # 원본과 그레이스케일 이미지 가로로 연결
 ```
 
-<details><summary><b>전체 코드 보기 (클릭)</b></summary>
+<details>
+<summary><b>전체 코드 보기 (클릭)</b></summary>
 
 ```python
 import cv2 as cv
