@@ -16,7 +16,8 @@ gray_3ch = cv.cvtColor(gray, cv.COLOR_GRAY2BGR) # 1ch img를 3ch shape으로만 
 combined_img = np.hstack((img, gray_3ch)) # 원본과 그레이스케일 이미지 가로로 연결
 ```
 
-<details><summary><b>전체 코드 보기 (클릭)</b></summary>
+<details>
+<summary><b>전체 코드 보기 (클릭)</b></summary>
 
 ```python
 import cv2 as cv
