@@ -329,12 +329,16 @@ cv2.destroyAllWindows()
   - Colormap 시각화: Jet colormap을 사용하여 깊이를 색상으로 표현 (빨강: 가까움, 파랑: 멈)
 
 * **주요 구현 포인트:**
-1. **StereoBM 객체 생성:** `cv2.StereoBM_create()`로 블록 매칭 알고리즘 초기화 (disparities=80, blockSize=15)
+1. **StereoBM 객체 생성:** `cv2.StereoBM_create()`로 블록 매칭 알고리즘 초기화 (disparities=16*5, blockSize=15)
+- disparities: OpenCV 내부 연산 구조 상 반드시 16의 배수로 설정해야 함
+- blockSize: 중심을 잡기 위해 반드시 홀수여야 함
 2. **Disparity 계산:** `stereo.compute()`로 좌/우 이미지로부터 disparity 맵 계산하고 16으로 정규화
-3. **깊이 맵 계산:** 스테레오 공식 Z = fB / d를 적용하여 실제 3D 깊이 값 계산
-4. **유효성 마스크 생성:** disparity > 0인 픽셀만 유효한 측정값으로 처리
-5. **ROI별 평균값 계산:** 지정된 ROI(Painting, Frog, Teddy) 내에서 평균 disparity 및 깊이 계산
-6. **색상 맵 적용:** `cv2.applyColorMap()`으로 disparity와 깊이를 시각화 가능한 색상으로 변환
+- StereoBM은 내부적으로 결과값에 16을 곱해 16비트 정수형(CV_16S)으로 변환함
+- 따라서 Depth를 계산하기 위해 16으로 다시 나누어 스케일을 복원해야 함
+4. **깊이 맵 계산:** 스테레오 공식 Z = fB / d를 적용하여 실제 3D 깊이 값 계산
+5. **유효성 마스크 생성:** disparity > 0인 픽셀만 유효한 측정값으로 처리
+6. **ROI별 평균값 계산:** 지정된 ROI(Painting, Frog, Teddy) 내에서 평균 disparity 및 깊이 계산
+7. **색상 맵 적용:** `cv2.applyColorMap()`으로 disparity와 깊이를 시각화 가능한 색상으로 변환
 
 * **핵심 코드:**
 ```python
