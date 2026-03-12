@@ -184,8 +184,12 @@ for i, fname in enumerate(images):
 </details>
 
 * **주요 결과물:**
-  - **카메라 행렬 K와 왜곡 계수** 
+  - **카메라 행렬 K와 왜곡 계수**
+  <img width="451" height="123" alt="스크린샷 2026-03-12 165312" src="https://github.com/user-attachments/assets/87935b5f-0d35-494b-a222-cc9b9b3ee49e" />
+
   - **cornerSubPix 정밀화 효과 시각화:**
+  ![calibrated01](https://github.com/user-attachments/assets/c808fa64-d6b4-479f-98f1-cbf9e0abab8b)
+
 
 #### 📊 각 코너별 이동 거리 (상위 5개)
 ```
