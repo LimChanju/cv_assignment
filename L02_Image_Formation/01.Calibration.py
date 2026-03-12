@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 import glob
@@ -20,14 +21,14 @@ objp *= square_size # 실제 크기 반영 (mm 단위로 변환)
 objpoints = [] # 실제 3D 좌표 (체크보드의 각 코너에 대한 실제 위치)
 imgpoints = [] # 이미지 상의 2D 좌표 (체크보드의 각 코너가 이미지에서 어디에 위치하는지)
 
-images = glob.glob("calibration_images/left*.jpg")
+images = glob.glob("images/calibration_images/left*.jpg")
 
 img_size = None
 
 # -----------------------------
 # 1. 체크보드 코너 검출
 # -----------------------------
-for fname in images:
+for fname in images: # 13장의 이미지를 모두 반복해서 카메라 파라미터 K와 dist의 계산에 필요한 2D-3D 매칭 데이터를 수집
     img = cv2.imread(fname) # 이미지 로드
     if img is None:
         print(f"에러: '{fname}' 이미지를 불러올 수 없습니다. 파일 경로를 다시 확인하세요.") # 이미지가 제대로 로드되지 않았을 경우 에러 메시지 출력
@@ -38,7 +39,7 @@ for fname in images:
         img_size = gray.shape[::-1] # 이미지 크기 저장 (width, height)
     
     # 코너 검출 수행
-    ret, corners = cv2.findChessboardCorners(gray CHECKERBOARD, None) # 체크보드 코너 검출, ret은 성공 여부, corners는 검출된 코너 좌표
+    ret, corners = cv2.findChessboardCorners(gray, CHECKERBOARD, None) # 체크보드 코너 검출, ret은 성공 여부, corners는 검출된 코너 좌표
     
     # 코너 검출에 성공한 경우 배열에 추가 (실패한 이미지는 예외)
     if ret == True:
@@ -50,6 +51,7 @@ for fname in images:
 # -----------------------------
 # 2. 카메라 캘리브레이션
 # -----------------------------
+# 1번에서 구한 2D-3D 매칭 데이터를 이용해 카메라 파라미터 K와 왜곡 계수 dist를 계산
 if len(objpoints) > 0: # 만약 코너가 검출된 이미지가 하나라도 있다면 캘리브레이션 수행
      # 카메라 캘리브레이션 수행, K는 카메라 행렬, dist는 왜곡 계수, rvecs와 tvecs는 각 이미지에 대한 회전 및 이동 벡터
     ret, K, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img_size, None, None)
@@ -66,19 +68,41 @@ print(dist)
 # -----------------------------
 # 3. 왜곡 보정 시각화
 # -----------------------------
-# 시각화를 위해 첫 번째 이미지를 사용
-test_image_path = image[0] # 첫 번째 이미지 경로
-test_img = cv2.imread(test_image_path) # 첫 번째 이미지 로드
-h, w = test_img.shape[:2] # 이미지 높이와 너비 추출
+# 전체 이미지를 왜곡 보정 및 첫 번째 이미지만 시각화
+for i, fname in enumerate(images):
+    img = cv2.imread(fname) # 이미지 로드
+    if img is None:
+        continue
+    
+    h, w = img.shape[:2] # 이미지 높이와 너비 추출
+    
+    # 최적의 카메라 행렬 계산
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(K, dist, (w, h), 1, (w, h)) # alpha=1: 원본 이미지의 모든 픽셀 보존
 
-# 최적의 카메라 행렬 계산 (alpha=1: 원본 이미지의 모든 픽셀 보존)
-newcameramtx, roi = cv2.getOptimalNewCameraMatrix(K, dist, (w, h), 1, (w, h))
+    # undistort()를 사용하여 왜곡 보정
+    dst = cv2.undistort(img, K, dist, None, newcameramtx)
 
-# undistort()를 사용하여 왜곡 보정
-dst = cv2.undistort(test_img, K, dist, None, newcameramtx)
+    # 원본 이미지와 보정된 이미지를 가로로 연결 (hstack)
+    combined_img = np.hstack((img, dst))
+    
+    # combined_img를 디렉토리에 저장하기 위한 디렉토리 및 파일 이름 생성
+    save_dir = "images/calibration_results"
+    os.makedirs(save_dir, exist_ok=True) # 디렉토리가 존재하지 않으면 생성
+    
+    base_name = os.path.basename(fname) # 원본 파일 이름 추출
+    save_name = base_name.replace("left", "calibrated") # 저장할 파일 이름 변경 (예: left01.jpg -> calibrated01.jpg)
+    save_path = os.path.join("images/calibration_results", save_name)
+    
+    # 이미지 저장
+    success = cv2.imwrite(save_path, combined_img)
+    if not success:
+        print(f"이미지 저장 실패: {save_path}")
+    else:
+        print(f"이미지 저장 성공: {save_path}")
 
-# 결과 시각화
-cv2.imshow('Original Image', test_img) # 원본 이미지 표시
-cv2.imshow('Undistorted Image', dst) # 왜곡 보정된 이미지 표시
-cv2.waitKey(0) # 키 입력 대기
-cv2.destroyAllWindows() # 모든 창 닫기
+    # 첫 번째 이미지만 시각화 수행
+    if i == 0:
+        cv2.namedWindow('First Image - Original (Left) vs Undistorted (Right)', cv2.WINDOW_NORMAL) # 창 크기 조절 가능하도록 설정 
+        cv2.imshow('First Image - Original (Left) vs Undistorted (Right)', combined_img) # 원본과 보정된 이미지 함께 표시
+        cv2.waitKey(0) # 키 입력 대기
+        cv2.destroyAllWindows() # 모든 창 닫기
