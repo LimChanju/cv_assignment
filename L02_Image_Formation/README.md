@@ -213,13 +213,15 @@ for i, fname in enumerate(images):
   - 유사 변환과 어파인 변환의 관계: 본 과제의 조건(회전, 축소, 이동)은 비틀림이나 찌그러짐(Shear)이 없는 유사 변환(DoF 4)에 해당. 이는 수학적으로 어파인 변환(DoF 6)의 부분집합이므로, OpenCV에서는 `cv2.warpAffine()`이라는 통합된 2×3 행렬 연산 함수를 통해 처리
   - `cv2.getRotationMatrix2D()`: 2×3 변환 행렬 M을 반환하며, 수식은 다음과 같음:
 
-    $$M = \begin{bmatrix} \alpha \cos\theta & -\alpha \sin\theta & t_x \\ \alpha \sin\theta & \alpha \cos\theta & t_y \end{bmatrix}$$
+    $$
+    M = \begin{bmatrix} \alpha \cos\theta & -\alpha \sin\theta & t_x \\ \alpha \sin\theta & \alpha \cos\theta & t_y \end{bmatrix}
+    $$
 
     (단, $\alpha$: 스케일, $\theta$: 회전 각도, $t_x, t_y$: 평행이동)
   - 변환 행렬의 마지막 열은 평행이동(translation) 항을 나타냄. M[0, 2]는 x축 평행이동, M[1, 2]는 y축 평행이동
 
 * **주요 구현 포인트:**
-1. **회전 및 스케일 행렬 생성:** `cv2.getRotationMatrix2D()`로 중심점 기준 회전 및 스케일 변환 행렬 생성 (30도 회전, 0.8배 스케일). 반환되는 2×3 행렬 M의 회전/스케일 부분: $\begin{bmatrix} 0.8\cos(30°) & -0.8\sin(30°) \\ 0.8\sin(30°) & 0.8\cos(30°) \end{bmatrix} \approx \begin{bmatrix} 0.693 & -0.4 \\ 0.4 & 0.693 \end{bmatrix}$
+1. **회전 및 스케일 행렬 생성:** `cv2.getRotationMatrix2D()`로 중심점 기준 회전 및 스케일 변환 행렬 생성
 2. **평행이동 추가:** 생성된 변환 행렬의 마지막 열에 평행이동 값(tx=80, ty=-40)을 직접 더해서 M의 [0, 2]와 M[1, 2] 요소 업데이트하여 삼중 변환 적용
 3. **어파인 변환 적용:** `cv2.warpAffine()`으로 계산된 변환 행렬을 이미지에 적용. 픽셀 $(x, y) \rightarrow (x', y') = M \cdot (x, y, 1)^T$
 4. **출력 이미지 크기 유지:** 변환 후 출력 이미지의 크기는 원본과 동일하게 유지
