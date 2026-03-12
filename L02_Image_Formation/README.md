@@ -126,8 +126,13 @@ for i, fname in enumerate(images):
 
 * **주요 결과물:** 
   - 카메라 행렬 K와 왜곡 계수가 출력됨
+  <img width="451" height="123" alt="image" src="https://github.com/user-attachments/assets/04f813a9-ab4c-4829-a554-5c2bf22243d7" />
+  
   - 원본 이미지와 왜곡이 보정된 이미지가 나란히 저장됨
-  - 특히 이미지 가장자리의 왜곡이 효과적으로 제거됨
+  ![calibrated01](https://github.com/user-attachments/assets/9e0e6081-3571-421a-8c80-dc9503868b55)
+
+
+
 
 ---
 
@@ -219,9 +224,8 @@ cv2.destroyAllWindows()
 </details>
 
 * **주요 결과물:**
-  - 원본 이미지: 원래의 장미 사진
-  - 변환 이미지: 30도 반시계방향 회전 + 0.8배 스케일 + 우측 하단 평행이동이 적용된 결과
-  - 변환 과정에서 이미지 경계 밖의 영역은 검정색(기본값)으로 채워짐
+<img width="2376" height="792" alt="rose_transformed" src="https://github.com/user-attachments/assets/12b68ca7-03dd-4c75-8087-aca609ae92c6" />
+
 
 ---
 
@@ -424,11 +428,10 @@ cv2.destroyAllWindows()
 </details>
 
 * **주요 결과물:**
-  - **ROI별 깊이 분석:** 3개의 객체(Painting, Frog, Teddy)에 대한 평균 시차 및 깊이 값 계산
-  - **Disparity 맵:** 시차를 색상으로 시각화한 이미지 (빨강: 가까움, 파랑: 멀다)
-  - **Depth 맵:** 실제 3D 깊이 정보를 색상으로 표현한 이미지
-  - **ROI 표시:** 좌/우 원본 이미지에 분석 대상 ROI를 초록색 사각형으로 표시
-  - **객체 거리 비교:** 가장 가까운 객체와 가장 먼 객체를 자동으로 판별하여 출력
+<img width="293" height="155" alt="image" src="https://github.com/user-attachments/assets/e8e311e4-4a99-4315-adae-354cef75adcc" />
+<img width="1919" height="1029" alt="image" src="https://github.com/user-attachments/assets/b77ca0e7-35b1-4ef9-890e-821c3f641e51" />
+
+
 
 ---
 
