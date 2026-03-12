@@ -521,11 +521,3 @@ cv2.destroyAllWindows()
 <img width="293" height="155" alt="image" src="https://github.com/user-attachments/assets/e8e311e4-4a99-4315-adae-354cef75adcc" />
 <img width="1919" height="1029" alt="image" src="https://github.com/user-attachments/assets/b77ca0e7-35b1-4ef9-890e-821c3f641e51" />
 
-
-
----
-
-## 학습 요점 정리 📚
-* **과제 1 (카메라 캘리브레이션):** cornerSubPix로 **0.19px 수준의 서브 픽셀 정밀화**를 달성하여 캘리브레이션 정확도를 극대화. 정밀한 카메라 파라미터 K와 왜곡 계수로 렌즈 왜곡을 효과적으로 보정
-* **과제 2 (이미지 변환):** 어파인 변환을 활용하여 이미지에 복합적인 기하학적 변환(회전, 스케일, 평행이동)을 효율적으로 적용
-* **과제 3 (깊이 맵):** 스테레오 비전의 원리를 이해하고 실제로 2D 이미지로부터 3D 정보를 추출하는 강력한 기법
