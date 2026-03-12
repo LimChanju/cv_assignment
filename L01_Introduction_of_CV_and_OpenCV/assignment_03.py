@@ -56,7 +56,7 @@ def main():
     global img, clone, roi_img # main 함수 내 while 루프 안에서 사용할 전역 변수들
     
     # 1. 이미지 로드
-    img_path = 'soccer.jpg' # 이미지 경로 설정
+    img_path = './img/soccer.jpg' # 이미지 경로 설정
     img = cv.imread(img_path) # 이미지 로드
     
     if img is None:

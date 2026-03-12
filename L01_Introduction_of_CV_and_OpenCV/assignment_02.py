@@ -35,7 +35,7 @@ def main():
     global brush_size # main 함수에서 키보드 입력을 통해 붓 크기를 조절하기 위해 전역 변수로 선언
     
     # 그릴 수 있는 캔버스 생성 (600x800 크기, 흰색 배경)
-    img_path = 'soccer.jpg' # 이미지 경로 설정
+    img_path = './img/soccer.jpg' # 이미지 경로 설정
     img = cv.imread(img_path) # 이미지 로드
     window_name = 'Drawing Canvas' # 창 이름 설정
     

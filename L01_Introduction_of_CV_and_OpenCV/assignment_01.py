@@ -3,7 +3,7 @@ import numpy as np
 
 def main():
     # 1. 이미지 로드
-    img_path = 'soccer.jpg' # 이미지 경로 설정
+    img_path = './img/soccer.jpg' # 이미지 경로 설정
     img = cv.imread(img_path) # 이미지 로드
     
     # 이미지 제대로 로드되었는지 확인
