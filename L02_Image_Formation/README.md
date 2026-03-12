@@ -213,11 +213,12 @@ for i, fname in enumerate(images):
   - 유사 변환과 어파인 변환의 관계: 본 과제의 조건(회전, 축소, 이동)은 비틀림이나 찌그러짐(Shear)이 없는 유사 변환(DoF 4)에 해당. 이는 수학적으로 어파인 변환(DoF 6)의 부분집합이므로, OpenCV에서는 `cv2.warpAffine()`이라는 통합된 2×3 행렬 연산 함수를 통해 처리
   - `cv2.getRotationMatrix2D()`: 2×3 변환 행렬 M을 반환하며, 수식은 다음과 같음:
 
-    $$
+    ```math
     M = \begin{bmatrix} \alpha \cos\theta & -\alpha \sin\theta & t_x \\ \alpha \sin\theta & \alpha \cos\theta & t_y \end{bmatrix}
-    $$
-
-    (단, $\alpha$: 스케일, $\theta$: 회전 각도, $t_x, t_y$: 평행이동)
+    
+    (단, \alpha: 스케일, \theta: 회전 각도, t_x, t_y: 평행이동)
+    ```
+    
   - 변환 행렬의 마지막 열은 평행이동(translation) 항을 나타냄. M[0, 2]는 x축 평행이동, M[1, 2]는 y축 평행이동
 
 * **주요 구현 포인트:**
