@@ -26,9 +26,11 @@ sobel_x = cv.Sobel(gray, cv.CV_64F, 1, 0, ksize=3)
 sobel_y = cv.Sobel(gray, cv.CV_64F, 0, 1, ksize=3)
 
 # 3. 그래디언트 벡터의 크기(에지 강도) 계산
+# cv.magnitude(x, y)는 x와 y의 크기를 계산하여 에지 강도를 구하는 함수. 여기서는 sobel_x와 sobel_y를 사용하여 각 픽셀에서의 에지 강도를 계산합니다.
 magnitude = cv.magnitude(sobel_x, sobel_y)
 
 # 4. 시각화 및 저장을 위해 8비트 이미지로 정규화 및 변환
+# cv.convertScaleAbs(src)는 입력 이미지의 절대값을 계산하고, 결과를 uint8로 변환하는 함수. 에지 강도는 양수이므로 절대값을 취하는 것은 큰 의미가 없지만, 이 함수를 사용하여 결과를 uint8로 변환할 수 있음.
 magnitude_uint8 = cv.convertScaleAbs(magnitude)
 ```
 
@@ -108,7 +110,6 @@ if __name__ == "__main__":
 * **주요 결과물:**
   - **결과 이미지**
 <img width="1000" height="500" alt="edge_comparison_plot" src="https://github.com/user-attachments/assets/93b4a770-c241-4672-814d-fd56bccd1a15" />
-
 
 ---
 
@@ -240,13 +241,33 @@ if __name__ == "__main__":
 </details>
 
 * **주요 결과물:**
+<img width="1200" height="600" alt="hough_lines_comparison(threshold=150,max=100,min=10)" src="https://github.com/user-attachments/assets/f3006098-3fe4-4e17-8e55-7ac8f57713c8" />
+
+- 초기 결과 : `cv.HoughLinesP()`의 파라미터만을 수정한 결과, 아래 직선보다 배경의 나무나 기와지붕에 더 많이 생성되고 있음을 확인한 후, blur처리하여 배경의 패턴을 직선으로 검출하지 못하도록 함
+
+
+<img width="2327" height="1113" alt="canny_hough_strategy" src="https://github.com/user-attachments/assets/9c042535-f623-4a2a-9d21-edc1d0669d2b" />
+
+- 중간 결과 : `cv.GaussianBlur()`를 5X5로 적용하여 실험 진행, 7X7까지 적용해 봄
+
+<img width="1200" height="600" alt="hough_lines_comparison(blur=7, threshold=90,min=25,max=4)" src="https://github.com/user-attachments/assets/de453b3f-34d4-492c-ad1e-d26f30fd3352" />
+
+- 중간 결과 2 : blur를 7X7, threshold=90, min=25, max=4로 적용, 기와 지붕에 여전히 FP 존재
+
+
 <img width="1200" height="600" alt="roi_hough_lines" src="https://github.com/user-attachments/assets/aa85e360-35f6-486d-b7fa-13b1beca07f6" />
 
+- 최종 결과 : ROI를 적용하여 다보탑 위주로만 직선을 검출하도록 수정
+```
+x1, y1 = 196, 64
+x2, y2 = 636, 484
+roi_gray = gray[y1:y2, x1:x2]
+```
 
 ---
 
 ## 과제 3: GrabCut을 이용한 대화식 영역 분할 및 객체 추출 💭
-* **설명:** GrabCut을 활용하여 원본 이미지에서 사용자가 지정한 사각형 영역을 바탕으로 객체와 배경을 분리하는 대화식 영상 분할 기법을 실습
+* **설명:** GrabCut을 활용하여 원본 이미지에서 사용자가 지정한 사각형 영역을 바탕으로 객체와 배경을 분리하는 대화식 영상 분할 기법
 * **배경 지식:**
   - 가우시안 혼합 모델 (GMM, Gaussian Mixture Model): 사용자가 지정한 ROI의 외부를 확실한 배경으로 간주하고, 내부를 객체와 배경이 혼합한 영역으로 가정한 뒤, 객체와 배경의 색상 분포를 GMM으로 모델링
   - 그래프 컷 (Graph Cut): 각 픽셀을 그래프의 노드로 삼고, 픽셀 간의 색상 유사도를 간선의 가중치로 설정. 이후 Min-Cut/Max-Flow 알고리즘을 적용해 에너지를 최소화하는 방향으로 객체와 배경을 분리함.
@@ -255,10 +276,10 @@ if __name__ == "__main__":
 1. **모델 초기화:** `bgdModel`과 `fgdModel`을 `np.zeros((1, 65), np.float64)` 배열로 초기화하여 GMM이 사용할 메모리 공간을 할당
 2. **초기 사각형 지정 `(rect)`:** 추출하고자 하는 객체를 포함하는 최소한의 사각형의 좌표 `(x, y, width, height)`를 지정
 3. **GrabCut 수행 `(cv.grabCut)`:** `cv.GC_INIT_WITH_RECT` 모드를 사용하여 사각형 기반의 분할을 수행, 알고리즘 실행 후 입력된 mask 배열은 0~3 사이의 값으로 업데이트됨
- - 0 (cv.GC_BGD): 확실한 배경
- - 1 (cv.GC_FGD): 확실한 전경
- - 2 (cv.GC_PR_BGD): 배경일 가능성이 높은 영역
- - 3 (cv.GC_PR_FGD): 객체일 가능성이 높은 영역
+   - 0 (`cv.GC_BGD`): 확실한 배경
+   - 1 (`cv.GC_FGD`): 확실한 전경
+   - 2 (`cv.GC_PR_BGD`): 배경일 가능성이 높은 영역
+   - 3 (`cv.GC_PR_FGD`): 객체일 가능성이 높은 영역
 4. **마스크 이진화 및 배경 제거:** `np.where()`를 사용하여 `mask` 값이 0 또는 2인 경우 0으로, 1 또는 3인 경우 1로 변환한 후 이진화된 마스크를 원본 이미지에 곱하여 배경 픽셀을 검은색으로 제거함
 
 * **핵심 코드:**
