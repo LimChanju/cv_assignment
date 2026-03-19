@@ -15,7 +15,7 @@ def main():
     line_img = img.copy()
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-    # 1. 제공해주신 ROI 좌표 적용
+    # 다보탑 위주 ROI 좌표 적용
     x1, y1 = 196, 64
     x2, y2 = 636, 484
 
@@ -26,16 +26,16 @@ def main():
     cv.rectangle(line_img, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
     # 2. ROI 영역 내 노이즈 제거 및 에지 검출
-    blurred = cv.GaussianBlur(roi_gray, (7, 7), 0)
-    edges = cv.Canny(blurred, 100, 200)
+    blurred = cv.GaussianBlur(roi_gray, (7, 7), 0) # 가우시안 블러를 적용해 노이즈 제거
+    edges = cv.Canny(blurred, 100, 200) # 노이즈 제거된 이미지를 이용해 캐니 에지 검출 진행
 
     # 3. 다보탑 구조 검출에 맞춘 허프 변환 파라미터 
     # (배경 노이즈가 제거되었으므로 다보탑의 짧은 선들을 찾도록 완화된 기준 적용)
-    rho = 1
-    theta = np.pi / 180
-    threshold = 60       # 기준 대폭 완화
-    min_line_length = 30 # 다보탑의 짧은 계단/난간 검출
-    max_line_gap = 5    
+    rho = 1                     # 거리 해상도 (픽셀 단위)
+    theta = np.pi / 180         # 각도 해상도 (라디안 단위, 여기서는 1도)
+    threshold = 60              # 직선으로 판단할 최소 교차점(투표) 수
+    min_line_length = 30        # 선분의 최소 길이
+    max_line_gap = 5            # 동일한 선상에 있는 선분들 사이의 최대 허용 간격
 
     lines = cv.HoughLinesP(edges, rho, theta, threshold, 
                            minLineLength=min_line_length, 
@@ -47,6 +47,7 @@ def main():
             x_line1, y_line1, x_line2, y_line2 = line[0]
             
             # 절대 좌표 = ROI 내부 좌표 + ROI 시작 오프셋
+            # 검출된 좌표는 ROI 내부에서의 좌표이기 때문에 ROI 시작 오프셋을 더해 원본 이미지의 절대 좌표로 변환해야 함
             abs_x1 = x_line1 + x1
             abs_y1 = y_line1 + y1
             abs_x2 = x_line2 + x1
