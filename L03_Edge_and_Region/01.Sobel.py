@@ -5,7 +5,7 @@ import os
 
 def main():
     
-    # 1. 이미지 불러오기 (실제 파일 경로로 변경 필요)
+    # 1. 이미지 불러오기
     img_path = 'images/edgeDetectionImage.jpg' 
     img = cv.imread(img_path)
 

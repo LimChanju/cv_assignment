@@ -285,29 +285,33 @@ roi_gray = gray[y1:y2, x1:x2]
 2. **초기 사각형 지정 `(rect)`:** 추출하고자 하는 객체를 포함하는 최소한의 사각형의 좌표 `(x, y, width, height)`를 지정
 3. **GrabCut 수행 `(cv.grabCut)`:** `cv.GC_INIT_WITH_RECT` 모드를 사용하여 사각형 기반의 분할을 수행, 알고리즘 실행 후 입력된 mask 배열은 0~3 사이의 값으로 업데이트됨
    - 0 (`cv.GC_BGD`): 확실한 배경
-   - 1 (`cv.GC_FGD`): 확실한 전경
+   - 1 (`cv.GC_FGD`): 확실한 객체
    - 2 (`cv.GC_PR_BGD`): 배경일 가능성이 높은 영역
    - 3 (`cv.GC_PR_FGD`): 객체일 가능성이 높은 영역
 4. **마스크 이진화 및 배경 제거:** `np.where()`를 사용하여 `mask` 값이 0 또는 2인 경우 0으로, 1 또는 3인 경우 1로 변환한 후 이진화된 마스크를 원본 이미지에 곱하여 배경 픽셀을 검은색으로 제거함
 
 * **핵심 코드:**
 ```python
-# 1. 마스크 및 GMM 모델 초기화
+# 1. 마스크 및 GMM 모델 초기화 (bgdModel과 fgdModel은 np.zeros((1, 65), np.float64)로 초기화)
 mask = np.zeros(img.shape[:2], np.uint8)
 bgdModel = np.zeros((1, 65), np.float64)
 fgdModel = np.zeros((1, 65), np.float64)
 
 # 2. 초기 사각형 영역 설정 (x, y, width, height)
+# 이미지 가장자리에서 50 픽셀씩 떨어진 사각형 영역 설정 (x=50, y=50, width=이미지 너비-100, height=이미지 높이-100)
 rect = (50, 50, img.shape[1]-100, img.shape[0]-100)
 
 # 3. GrabCut 알고리즘 수행
 cv.grabCut(img, mask, rect, bgdModel, fgdModel, iterCount=5, mode=cv.GC_INIT_WITH_RECT)
 
 # 4. 마스크 값을 0(배경) 또는 1(전경)로 변경
+# 배경으로 분류된 픽셀은 0, 객체로 분류된 픽셀은 1로 설정하여 mask2를 생성
 mask2 = np.where((mask == cv.GC_BGD) | (mask == cv.GC_PR_BGD), 0, 1).astype('uint8')
 
 # 5. 배경 제거 (원본 이미지에 마스크 곱하기)
-result_img = img * mask2[:, :, np.newaxis]
+# mask2는 2차원이므로 원본 이미지(3차원)와 곱하기 위해 차원을 하나 추가(np.newaxis)
+result_img = img_rgb * mask2[:, :, np.newaxis]
+
 ```
 
 <details>
@@ -320,7 +324,7 @@ import matplotlib.pyplot as plt
 import os
 
 def main():
-    # 1. 이미지 경로 설정 (실제 커피잔 이미지가 있는 경로로 수정 필요)
+    # 1. 이미지 경로 설정
     img_path = 'images/coffee_cup.jpg' 
     
     # 이미지 읽기 및 예외 처리
@@ -332,26 +336,29 @@ def main():
     # matplotlib 출력을 위해 BGR 색상 공간을 RGB로 변환
     img_rgb = cv.cvtColor(img, cv.COLOR_BGR2RGB)
 
-    # 2. 마스크 및 GMM 모델 초기화 (힌트 참고)
+    # 2. 마스크 및 GMM 모델 초기화 (bgdModel과 fgdModel은 np.zeros((1, 65), np.float64)로 초기화)
     mask = np.zeros(img.shape[:2], np.uint8)
     bgdModel = np.zeros((1, 65), np.float64)
     fgdModel = np.zeros((1, 65), np.float64)
 
     # 3. 초기 사각형 영역 설정 (x, y, width, height)
-    # ※ 주의: 이 값은 실제 coffee cup 이미지에서 컵이 위치한 영역에 맞게 직접 조정해야 합니다.
-    # 아래는 임의로 이미지 내부를 지정한 예시 값입니다.
-    rect = (50, 50, img.shape[1]-100, img.shape[0]-100) 
+    rect = (50, 50, img.shape[1]-100, img.shape[0]-100) # 이미지 가장자리에서 50 픽셀씩 떨어진 사각형 영역 설정 (x=50, y=50, width=이미지 너비-100, height=이미지 높이-100)
 
     # 4. GrabCut 알고리즘 수행 (대화식 분할)
-    cv.grabCut(img_rgb, mask, rect, bgdModel, fgdModel, iterCount=5, mode=cv.GC_INIT_WITH_RECT)
+    # grabCut 함수는 원본 이미지, 마스크, 초기 사각형 영역, 배경 모델, 객체 모델, 반복 횟수, 모드를 인자로 받음
+    # 여기서는 초기 사각형 영역을 사용하여 GrabCut을 수행하도록 설정
+    cv.grabCut(img_rgb, mask, rect, bgdModel, fgdModel, iterCount=5, mode=cv.GC_INIT_WITH_RECT) 
 
-    # 5. 마스크 값을 0 또는 1로 변경 (힌트 참고)
+    # 5. 마스크 값을 0 또는 1로 변경
     # cv.GC_BGD(0), cv.GC_PR_BGD(2) -> 0 (배경)
     # cv.GC_FGD(1), cv.GC_PR_FGD(3) -> 1 (전경)
+    # np.where 함수를 사용하여 mask에서 배경과 객체를 구분
+    # 배경으로 분류된 픽셀은 0, 객체로 분류된 픽셀은 1로 설정하여 mask2를 생성
     mask2 = np.where((mask == cv.GC_BGD) | (mask == cv.GC_PR_BGD), 0, 1).astype('uint8')
+    
 
     # 6. 배경 제거 (원본 이미지에 마스크 곱하기)
-    # mask2는 2차원이므로 원본 이미지(3차원)와 곱하기 위해 차원을 하나 추가(np.newaxis)합니다.
+    # mask2는 2차원이므로 원본 이미지(3차원)와 곱하기 위해 차원을 하나 추가(np.newaxis)
     result_img = img_rgb * mask2[:, :, np.newaxis]
 
     # 7. matplotlib을 이용한 세 가지 이미지 나란히 시각화
@@ -378,7 +385,6 @@ def main():
     plt.tight_layout()
     
     # 8. 결과 이미지 저장
-    # 현재는 원본, 마스크, 결과가 모두 포함된 matplotlib Figure 전체를 저장하도록 작성했습니다.
     output_dir = 'result_images'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)

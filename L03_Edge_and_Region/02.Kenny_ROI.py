@@ -15,7 +15,7 @@ def main():
     line_img = img.copy()
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-    # 다보탑 위주 ROI 좌표 적용
+    # 1. 다보탑 위주 ROI 좌표 적용
     x1, y1 = 196, 64
     x2, y2 = 636, 484
 
