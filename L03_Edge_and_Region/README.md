@@ -107,6 +107,7 @@ if __name__ == "__main__":
 
 * **주요 결과물:**
   - **결과 이미지**
+<img width="1000" height="500" alt="edge_comparison_plot" src="https://github.com/user-attachments/assets/93b4a770-c241-4672-814d-fd56bccd1a15" />
 
 
 ---
@@ -239,6 +240,7 @@ if __name__ == "__main__":
 </details>
 
 * **주요 결과물:**
+<img width="1200" height="600" alt="roi_hough_lines" src="https://github.com/user-attachments/assets/aa85e360-35f6-486d-b7fa-13b1beca07f6" />
 
 
 ---
@@ -365,4 +367,5 @@ if __name__ == '__main__':
 </details>
 
 * **주요 결과물:**
+<img width="1500" height="500" alt="grabcut_result_plot" src="https://github.com/user-attachments/assets/b45f58c6-2029-48c3-b17d-6686519dd4a7" />
 
