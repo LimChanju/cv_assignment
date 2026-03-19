@@ -107,8 +107,7 @@ if __name__ == "__main__":
 
 </details>
 
-* **주요 결과물:**
-  - **결과 이미지**
+* **결과 이미지**
 <img width="1000" height="500" alt="edge_comparison_plot" src="https://github.com/user-attachments/assets/93b4a770-c241-4672-814d-fd56bccd1a15" />
 
 ---
