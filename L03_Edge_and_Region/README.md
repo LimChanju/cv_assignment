@@ -1,4 +1,4 @@
-# 이미지 형성 과제 (2주차 Assignment 1~3)
+# 이미지 형성 과제 (3주차 Assignment 1~3)
 
 ## 과제 1: 소벨 에지 검출 🥅
 * **설명:** Sobel Filter를 이용하여 이미지의 Edge를 검출하고 시각화한다.
@@ -111,356 +111,258 @@ if __name__ == "__main__":
 
 ---
 
-## 과제 2: 이미지 변환 (회전, 스케일, 평행이동) 🔄
-* **설명:** 유사 변환(Similarity Transformation) 개념을 기반으로, 한 장의 이미지에 rotation, Scaling, translation을 동시에 적용합니다.
+## 과제 2: 캐니 에지 및 허프 변환을 이용한 직선 검출 🔍
+* **설명:** 캐니 에지 검출과 확률적 허프 변환을 이용하여 복잡한 배경을 가진 이미지에서 의미 있는 직선을 검출하는 것을 목표로 함
 * **배경 지식:**
-  - 유사 변환과 어파인 변환의 관계: 본 과제의 조건(회전, 축소, 이동)은 비틀림이나 찌그러짐(Shear)이 없는 유사 변환(DoF 4)에 해당. 이는 수학적으로 어파인 변환(DoF 6)의 부분집합이므로, OpenCV에서는 `cv2.warpAffine()`이라는 통합된 2×3 행렬 연산 함수를 통해 처리
-  - `cv2.getRotationMatrix2D()`: 2×3 변환 행렬 M을 반환하며, 수식은 다음과 같음:
-
-    ```math
-    M = \begin{bmatrix} \alpha \cos\theta & -\alpha \sin\theta & t_x \\ \alpha \sin\theta & \alpha \cos\theta & t_y \end{bmatrix}
-    
-    (단, \alpha: 스케일, \theta: 회전 각도, t_x, t_y: 평행이동)
-    ```
-    
-  - 변환 행렬의 마지막 열은 평행이동(translation) 항을 나타냄. M[0, 2]는 x축 평행이동, M[1, 2]는 y축 평행이동
+  - 캐니 에지 검출 (Canny Edge Detection): 노이즈에 민감한 미분 연산의 단점을 보완하기 위해 가우시안 필터를 이용해 노이즈를 줄이고 그래디언트를 계산 후 비최대 억제와 이중 임계값 처리를 거쳐 더 정확하고 얇은 윤곽선을 추출하는 알고리즘이다.
+  - 허프 변환 (Hough Transform): 이미지 내의 모든 에지 픽셀을 (ρ,θ)와 같은 파라미터 공간으로 변환하고 축적 배열에서 투표가 많이 모이는 지점을 찾아 직선을 검출하는 방법이다.
 
 * **주요 구현 포인트:**
-1. **회전 및 스케일 행렬 생성:** `cv2.getRotationMatrix2D()`로 중심점 기준 회전 및 스케일 변환 행렬 생성
-2. **평행이동 추가:** 생성된 변환 행렬의 마지막 열에 평행이동 값(tx=80, ty=-40)을 직접 더해서 M의 [0, 2]와 M[1, 2] 요소 업데이트하여 삼중 변환 적용
-3. **어파인 변환 적용:** `cv2.warpAffine()`으로 계산된 변환 행렬을 이미지에 적용. 픽셀 $(x, y) \rightarrow (x', y') = M \cdot (x, y, 1)^T$
-4. **출력 이미지 크기 유지:** 변환 후 출력 이미지의 크기는 원본과 동일하게 유지
+1. **노이즈 제거:** `cv.GaussianBlur`를 적용해 이미지의 노이즈가 많은 배경과 질감의 미세한 패턴이 에지로 검출되는 것을 방지함
+2. **파라미터 튜닝 최적화:** `cv.HoughLinesP()`의 파라미터를 수정하여 이미지에 맞는 파라미터를 찾아내는 과정을 거침
+3. **ROI 적용:** ROI를 다보탑 이미지에 적용하여 다보탑의 직선만이라도 제대로 검출할 수 있도록 영역을 제한하였음 
 
 * **핵심 코드:**
 ```python
-# 1. 회전 중심점 계산
-center = (w / 2.0, h / 2.0)
+# 1. ROI 설정 (Numpy Slicing)
+x1, y1 = 196, 64
+x2, y2 = 636, 484
+roi_gray = gray[y1:y2, x1:x2]
 
-# 2. 회전 및 스케올 변환 행렬 생성 (중심 기준 +30도 회전, 0.8배 스케일)
-angle = 30
-scale = 0.8
-M = cv2.getRotationMatrix2D(center, angle, scale)
-# M = [ α·cos(θ)   -α·sin(θ)   tx ]     여기서 α=0.8, θ=30°, tx=ty=0
-#     [ α·sin(θ)    α·cos(θ)   ty ]
-# ≈ [ 0.693   -0.4     0 ]
-#   [ 0.4     0.693   0 ]
+# 2. 노이즈 제거 및 에지 검출
+blurred = cv.GaussianBlur(roi_gray, (7, 7), 0)
+edges = cv.Canny(blurred, 100, 200)
 
-# 3. 평행이동 추가 (x축 +80, y축 -40)
-tx = 80
-ty = -40
-M[0, 2] += tx  # x축 평행이동 (+80), M은 2X3 행렬이므로 M[0, 2]는 x축 평행이동 요소
-M[1, 2] += ty  # y축 평행이동 (-40), M은 2X3 행렬이므로 M[1, 2]는 y축 평행이동 요소
+# 3. 허프 변환
+lines = cv.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=5)
 
-# 4. 어파인 변환 적용
-result = cv2.warpAffine(img, M, (w, h))
+# 4. 상대 좌표를 절대 좌표로 변환하여 원본 이미지에 작도
+if lines is not None:
+    for line in lines:
+        x_line1, y_line1, x_line2, y_line2 = line[0]
+        abs_x1, abs_y1 = x_line1 + x1, y_line1 + y1
+        abs_x2, abs_y2 = x_line2 + x1, y_line2 + y1
+        cv.line(line_img, (abs_x1, abs_y1), (abs_x2, abs_y2), (0, 0, 255), 2)
 ```
 
 <details>
 <summary><b>전체 코드 보기 (클릭)</b></summary>
 
 ```python
-import cv2
+import cv2 as cv
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 
-# 1. 이미지 로드
-img_path = 'images/rose.png'
-img = cv2.imread(img_path)
+def main():
+    img_path = 'images/dabo.jpg' 
+    img = cv.imread(img_path)
 
-if img is None:
-    print(f"에러: '{img_path}' 이미지를 불러올 수 없습니다. 경로를 확인하세요.")
-    exit()
+    if img is None:
+        print(f"에러: '{img_path}' 이미지를 불러올 수 없습니다. 경로를 확인하세요.")
+        return
 
-h, w = img.shape[:2]
+    # 직선을 그릴 복사본 생성
+    line_img = img.copy()
+    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-# 2. 회전 중심점 계산
-center = (w / 2.0, h / 2.0)
+    # 1. 제공해주신 ROI 좌표 적용
+    x1, y1 = 196, 64
+    x2, y2 = 636, 484
 
-# 3. 회전 및 크기 조절 적용
-angle = 30
-scale = 0.8
-M = cv2.getRotationMatrix2D(center, angle, scale)
-# M은 2x3 어파인 변환 행렬:
-# M = [ α·cos(θ)   -α·sin(θ)   tx ]     여기서 α=0.8, θ=30°
-#     [ α·sin(θ)    α·cos(θ)   ty ]
-# ≈ [ 0.693   -0.4     0 ]
-#   [ 0.4     0.693   0 ]
+    # Numpy 슬라이싱 [y축:y축, x축:x축] 을 이용해 다보탑 영역만 크롭
+    roi_gray = gray[y1:y2, x1:x2]
 
-# 4. 평행이동 적용
-# 변환 행렬 M의 마지막 열에 x, y 평행이동 값을 더해줌
-tx = 80
-ty = -40
-M[0, 2] += tx  # x축 평행이동 (+80), M은 2X3 행렬이므로 M[0, 2]는 x축 평행이동 요소: 0 + 80 = 80
-M[1, 2] += ty  # y축 평행이동 (-40), M은 2X3 행렬이므로 M[1, 2]는 y축 평행이동 요소: 0 - 40 = -40
-# 최종 M = [ 0.693   -0.4     80  ]
-#         [ 0.4     0.693  -40  ]
+    # 원본 이미지에 ROI 영역 시각적 표시 (파란색 사각형)
+    cv.rectangle(line_img, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
-# 5. 어파인 변환 적용
-result = cv2.warpAffine(img, M, (w, h))
+    # 2. ROI 영역 내 노이즈 제거 및 에지 검출
+    blurred = cv.GaussianBlur(roi_gray, (7, 7), 0)
+    edges = cv.Canny(blurred, 100, 200)
 
-# 6. 원본과 결과 이미지를 가로로 연결
-transformed_img = np.hstack((img, result))
+    # 3. 다보탑 구조 검출에 맞춘 허프 변환 파라미터 
+    # (배경 노이즈가 제거되었으므로 다보탑의 짧은 선들을 찾도록 완화된 기준 적용)
+    rho = 1
+    theta = np.pi / 180
+    threshold = 60       # 기준 대폭 완화
+    min_line_length = 30 # 다보탑의 짧은 계단/난간 검출
+    max_line_gap = 5    
 
-# 7. 결과 이미지 저장
-save_path = 'images/rose_transformed.png'
-success = cv2.imwrite(save_path, transformed_img)
-if success:
-    print(f"이미지 저장 성공: {save_path}")
-else:
-    print(f"이미지 저장 실패: {save_path}")
+    lines = cv.HoughLinesP(edges, rho, theta, threshold, 
+                           minLineLength=min_line_length, 
+                           maxLineGap=max_line_gap)
 
-# 8. 시각화
-cv2.namedWindow('L02 - Original vs Transformed', cv2.WINDOW_NORMAL)
-cv2.imshow('L02 - Original vs Transformed', transformed_img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    # 4. 검출된 직선을 원본 이미지의 절대 좌표로 변환하여 그리기
+    if lines is not None:
+        for line in lines:
+            x_line1, y_line1, x_line2, y_line2 = line[0]
+            
+            # 절대 좌표 = ROI 내부 좌표 + ROI 시작 오프셋
+            abs_x1 = x_line1 + x1
+            abs_y1 = y_line1 + y1
+            abs_x2 = x_line2 + x1
+            abs_y2 = y_line2 + y1
+            
+            cv.line(line_img, (abs_x1, abs_y1), (abs_x2, abs_y2), (0, 0, 255), 2)
+    else:
+        print("ROI 영역 내에서 직선이 검출되지 않았습니다.")
+
+    # 5. 시각화 및 결과 저장
+    img_rgb = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    line_img_rgb = cv.cvtColor(line_img, cv.COLOR_BGR2RGB)
+
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.imshow(img_rgb)
+    plt.title('Original Image')
+    plt.axis('off')
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(line_img_rgb)
+    plt.title('Hough Lines on ROI')
+    plt.axis('off')
+
+    plt.tight_layout()
+    
+    # 저장 디렉토리 처리
+    output_dir = 'result_images'
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    plt.savefig(os.path.join(output_dir, 'roi_hough_lines.png'))
+    
+    plt.show()
+
+if __name__ == "__main__":
+    main()
 ```
 
 </details>
 
 * **주요 결과물:**
-<img width="2376" height="792" alt="rose_transformed" src="https://github.com/user-attachments/assets/12b68ca7-03dd-4c75-8087-aca609ae92c6" />
 
 
 ---
 
-## 과제 3: 스테레오 비전을 이용한 깊이 맵 계산 🎬
-* **설명:** 좌/우 카메라로 촬영한 스테레오 이미지 쌍으로부터 disparity(시차)를 계산하고, 이를 통해 3D 깊이 정보를 추출합니다. ROI별 평균 깊이를 분석하여 가장 가까운 객체와 가장 먼 객체를 판별합니다.
+## 과제 3: GrabCut을 이용한 대화식 영역 분할 및 객체 추출 💭
+* **설명:** GrabCut을 활용하여 원본 이미지에서 사용자가 지정한 사각형 영역을 바탕으로 객체와 배경을 분리하는 대화식 영상 분할 기법을 실습
 * **배경 지식:**
-  - 스테레오 비전: 두 개의 카메라로 같은 장면을 촬영하여 3D 정보를 복원하는 기법
-  - Disparity(시차): 스테레오 이미지 쌍에서 같은 물체가 좌/우 이미지에 나타나는 위치의 차이
-  - Depth 계산: Z = fB / d (Z: 깊이, f: 초점거리, B: 기선거리, d: disparity)
-  - StereoBM: OpenCV의 블록 매칭 스테레오 알고리즘 (간단하고 빠름)
-  - Colormap 시각화: Jet colormap을 사용하여 깊이를 색상으로 표현 (빨강: 가까움, 파랑: 멈)
+  - 가우시안 혼합 모델 (GMM, Gaussian Mixture Model): 사용자가 지정한 ROI의 외부를 확실한 배경으로 간주하고, 내부를 객체와 배경이 혼합한 영역으로 가정한 뒤, 객체와 배경의 색상 분포를 GMM으로 모델링
+  - 그래프 컷 (Graph Cut): 각 픽셀을 그래프의 노드로 삼고, 픽셀 간의 색상 유사도를 간선의 가중치로 설정. 이후 Min-Cut/Max-Flow 알고리즘을 적용해 에너지를 최소화하는 방향으로 객체와 배경을 분리함.
 
 * **주요 구현 포인트:**
-1. **StereoBM 객체 생성:** `cv2.StereoBM_create()`로 블록 매칭 알고리즘 초기화 (disparities=16*5, blockSize=15)
-- disparities: OpenCV 내부 연산 구조 상 반드시 16의 배수로 설정해야 함
-- blockSize: 중심을 잡기 위해 반드시 홀수여야 함
-2. **Disparity 계산:** `stereo.compute()`로 좌/우 이미지로부터 disparity 맵 계산하고 16으로 정규화
-- StereoBM은 내부적으로 결과값에 16을 곱해 16비트 정수형(CV_16S)으로 변환함
-- 따라서 Depth를 계산하기 위해 16으로 다시 나누어 스케일을 복원해야 함
-4. **깊이 맵 계산:** 스테레오 공식 Z = fB / d를 적용하여 실제 3D 깊이 값 계산
-5. **유효성 마스크 생성:** disparity > 0인 픽셀만 유효한 측정값으로 처리
-6. **ROI별 평균값 계산:** 지정된 ROI(Painting, Frog, Teddy) 내에서 평균 disparity 및 깊이 계산
-7. **색상 맵 적용:** `cv2.applyColorMap()`으로 disparity와 깊이를 시각화 가능한 색상으로 변환
+1. **모델 초기화:** `bgdModel`과 `fgdModel`을 `np.zeros((1, 65), np.float64)` 배열로 초기화하여 GMM이 사용할 메모리 공간을 할당
+2. **초기 사각형 지정 `(rect)`:** 추출하고자 하는 객체를 포함하는 최소한의 사각형의 좌표 `(x, y, width, height)`를 지정
+3. **GrabCut 수행 `(cv.grabCut)`:** `cv.GC_INIT_WITH_RECT` 모드를 사용하여 사각형 기반의 분할을 수행, 알고리즘 실행 후 입력된 mask 배열은 0~3 사이의 값으로 업데이트됨
+ - 0 (cv.GC_BGD): 확실한 배경
+ - 1 (cv.GC_FGD): 확실한 전경
+ - 2 (cv.GC_PR_BGD): 배경일 가능성이 높은 영역
+ - 3 (cv.GC_PR_FGD): 객체일 가능성이 높은 영역
+4. **마스크 이진화 및 배경 제거:** `np.where()`를 사용하여 `mask` 값이 0 또는 2인 경우 0으로, 1 또는 3인 경우 1로 변환한 후 이진화된 마스크를 원본 이미지에 곱하여 배경 픽셀을 검은색으로 제거함
 
 * **핵심 코드:**
 ```python
-# 1. StereoBM 알고리즘 설정 및 Disparity 계산
-stereo = cv2.StereoBM_create(numDisparities=16*5, blockSize=15)
-disparity = stereo.compute(left_gray, right_gray).astype(np.float32)
-disparity = disparity / 16.0  # 정규화
+# 1. 마스크 및 GMM 모델 초기화
+mask = np.zeros(img.shape[:2], np.uint8)
+bgdModel = np.zeros((1, 65), np.float64)
+fgdModel = np.zeros((1, 65), np.float64)
 
-# 2. 깊이 맵 계산 (Z = fB / d)
-f = 700.0  # 초점거리
-B = 0.12   # 기선거리 (카메라 간 거리, m)
-valid_mask = disparity > 0
-safe_disparity = np.where(disparity > 0, disparity, 1.0) # 0으로 나누는 것을 방지하기 위해 0인 값은 임시로 1로 설정 (valid_mask로 나중에 필터링됨)
-depth_map = (f * B) / safe_disparity
-depth_map[~valid_mask] = 0
+# 2. 초기 사각형 영역 설정 (x, y, width, height)
+rect = (50, 50, img.shape[1]-100, img.shape[0]-100)
 
-# 3. ROI별 평균 깊이 계산
-for name, (x, y, w, h) in rois.items():
-    roi_depth = depth_map[y:y+h, x:x+w]
-    roi_valid = roi_depth > 0
-    if np.any(roi_valid):
-        avg_depth = np.mean(roi_depth[roi_depth > 0])
-    else:
-        avg_depth = 0
+# 3. GrabCut 알고리즘 수행
+cv.grabCut(img, mask, rect, bgdModel, fgdModel, iterCount=5, mode=cv.GC_INIT_WITH_RECT)
 
-# 4. 색상 맵 시각화 (Jet colormap: 빨강=가까움, 파랑=멈)
-depth_color = cv2.applyColorMap(depth_vis, cv2.COLORMAP_JET)
+# 4. 마스크 값을 0(배경) 또는 1(전경)로 변경
+mask2 = np.where((mask == cv.GC_BGD) | (mask == cv.GC_PR_BGD), 0, 1).astype('uint8')
+
+# 5. 배경 제거 (원본 이미지에 마스크 곱하기)
+result_img = img * mask2[:, :, np.newaxis]
 ```
 
 <details>
 <summary><b>전체 코드 보기 (클릭)</b></summary>
 
 ```python
-import cv2
+import cv2 as cv
 import numpy as np
-from pathlib import Path
+import matplotlib.pyplot as plt
+import os
 
-# 출력 폴더 생성
-output_dir = Path("./03_outputs")
-output_dir.mkdir(parents=True, exist_ok=True)
-
-# 좌/우 이미지 불러오기
-left_color = cv2.imread("images/left.png")
-right_color = cv2.imread("images/right.png")
-
-if left_color is None or right_color is None:
-    raise FileNotFoundError("좌/우 이미지를 찾지 못했습니다.")
-
-
-# 카메라 파라미터
-f = 700.0
-B = 0.12
-
-# ROI 설정
-rois = {
-    "Painting": (55, 50, 130, 110),
-    "Frog": (90, 265, 230, 95),
-    "Teddy": (310, 35, 115, 90)
-}
-
-# 그레이스케일 변환
-left_gray = cv2.cvtColor(left_color, cv2.COLOR_BGR2GRAY)
-right_gray = cv2.cvtColor(right_color, cv2.COLOR_BGR2GRAY)
-
-# -----------------------------
-# 1. Disparity 계산
-# -----------------------------
-# StereoBM 객체 생성
-# numDisparities는 16의 배수여야 하며, blockSize는 홀수여야 함
-stereo = cv2.StereoBM_create(numDisparities = 16*5, blockSize = 15)
-disparity = stereo.compute(left_gray, right_gray).astype(np.float32)
-
-disparity = disparity / 16.0 # OpenCV의 StereoBM은 내부적으로 disparity 값을 16배로 저장하므로, 실제 disparity 값을 얻기 위해 16으로 나눠줌
-
-# -----------------------------
-# 2. Depth 계산
-# Z = fB / d
-# -----------------------------
-# disparity > 0 인 픽셀에 대해서만 valid_mask 생성
-valid_mask = disparity > 0
-
-# 0으로 나누는 것을 방지하기 위해 0인 값은 임시로 1로 설정 (valid_mask로 나중에 필터링됨)
-safe_disparity = np.where(disparity > 0, disparity, 1.0)
-depth_map = (f * B) / safe_disparity
-
-# 유효하지 않은 곳은 depth 값을 0으로 처리
-depth_map[~valid_mask] = 0
-
-# -----------------------------
-# 3. ROI별 평균 disparity / depth 계산
-# -----------------------------
-results = {}
-
-for name, (x, y, w, h) in rois.items():
-    # ROI 영역 추출
-    roi_disp = disparity[y:y+h, x:x+w]
-    roi_depth = depth_map[y:y+h, x:x+w]
+def main():
+    # 1. 이미지 경로 설정 (실제 커피잔 이미지가 있는 경로로 수정 필요)
+    img_path = 'images/coffee_cup.jpg' 
     
-    # 해당 ROI 내에서 유효한(disparity > 0) 픽셀의 마스크
-    roi_valid = roi_disp > 0
+    # 이미지 읽기 및 예외 처리
+    img = cv.imread(img_path)
+    if img is None:
+        print(f"[{img_path}] 이미지를 불러올 수 없습니다. 경로를 확인해주세요.")
+        return
+
+    # matplotlib 출력을 위해 BGR 색상 공간을 RGB로 변환
+    img_rgb = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+
+    # 2. 마스크 및 GMM 모델 초기화 (힌트 참고)
+    mask = np.zeros(img.shape[:2], np.uint8)
+    bgdModel = np.zeros((1, 65), np.float64)
+    fgdModel = np.zeros((1, 65), np.float64)
+
+    # 3. 초기 사각형 영역 설정 (x, y, width, height)
+    # ※ 주의: 이 값은 실제 coffee cup 이미지에서 컵이 위치한 영역에 맞게 직접 조정해야 합니다.
+    # 아래는 임의로 이미지 내부를 지정한 예시 값입니다.
+    rect = (50, 50, img.shape[1]-100, img.shape[0]-100) 
+
+    # 4. GrabCut 알고리즘 수행 (대화식 분할)
+    cv.grabCut(img_rgb, mask, rect, bgdModel, fgdModel, iterCount=5, mode=cv.GC_INIT_WITH_RECT)
+
+    # 5. 마스크 값을 0 또는 1로 변경 (힌트 참고)
+    # cv.GC_BGD(0), cv.GC_PR_BGD(2) -> 0 (배경)
+    # cv.GC_FGD(1), cv.GC_PR_FGD(3) -> 1 (전경)
+    mask2 = np.where((mask == cv.GC_BGD) | (mask == cv.GC_PR_BGD), 0, 1).astype('uint8')
+
+    # 6. 배경 제거 (원본 이미지에 마스크 곱하기)
+    # mask2는 2차원이므로 원본 이미지(3차원)와 곱하기 위해 차원을 하나 추가(np.newaxis)합니다.
+    result_img = img_rgb * mask2[:, :, np.newaxis]
+
+    # 7. matplotlib을 이용한 세 가지 이미지 나란히 시각화
+    plt.figure(figsize=(15, 5))
     
-    # 유효한 픽셀이 있는 경우에만 평균 disparity / depth 계산
-    if np.any(roi_valid):
-        avg_disp = np.mean(roi_disp[roi_disp > 0])
-        avg_depth = np.mean(roi_depth[roi_depth > 0])
-    else:
-        avg_disp = 0
-        avg_depth = 0
+    # 원본 이미지
+    plt.subplot(1, 3, 1)
+    plt.imshow(img_rgb)
+    plt.title('Original Image')
+    plt.axis('off')
 
-    results[name] = {"disparity": avg_disp, "depth": avg_depth}
+    # 마스크 이미지 (시각화를 위해 1인 값을 255로 스케일링)
+    plt.subplot(1, 3, 2)
+    plt.imshow(mask2 * 255, cmap='gray') 
+    plt.title('Mask Image')
+    plt.axis('off')
 
-# -----------------------------
-# 4. 결과 출력
-# -----------------------------
-print("--- ROI별 평균 Disparity 및 Depth ---")
-for name, data in results.items():
-    print(f"{name}: Disparity = {data['disparity']:.2f}, Depth = {data['depth']:.2f}")
+    # 배경 제거 이미지
+    plt.subplot(1, 3, 3)
+    plt.imshow(result_img)
+    plt.title('Background Removed')
+    plt.axis('off')
 
-# 가장 가까운 영역과 가장 먼 영역 찾기
-# 유효한 disparity 값이 이쓴 영역만 대상으로 함
-valid_results = {k: v for k, v in results.items() if v["depth"] > 0} # depth가 0보다 큰 영역만 필터링
-
-if valid_results:
-    closest = min(valid_results.items(), key=lambda x: x[1]["depth"])
-    farthest = max(valid_results.items(), key=lambda x: x[1]["depth"])
+    plt.tight_layout()
     
-    print("\n--- 가장 가까운 영역과 가장 먼 영역 ---")
-    print(f"\n가장 가까운 영역: {closest[0]} (Depth = {closest[1]['depth']:.2f})")
-    print(f"가장 먼 영역: {farthest[0]} (Depth = {farthest[1]['depth']:.2f})")
+    # 8. 결과 이미지 저장
+    # 현재는 원본, 마스크, 결과가 모두 포함된 matplotlib Figure 전체를 저장하도록 작성했습니다.
+    output_dir = 'result_images'
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-# -----------------------------
-# 5. disparity 시각화
-# 가까울수록 빨강 / 멀수록 파랑
-# -----------------------------
-disp_tmp = disparity.copy()
-disp_tmp[disp_tmp <= 0] = np.nan
+    plt_output_path = os.path.join(output_dir, 'grabcut_result_plot.png')
+    plt.savefig(plt_output_path)
+    
+    # 화면에 출력
+    plt.show()
 
-if np.all(np.isnan(disp_tmp)):
-    raise ValueError("유효한 disparity 값이 없습니다.")
-
-d_min = np.nanpercentile(disp_tmp, 5)
-d_max = np.nanpercentile(disp_tmp, 95)
-
-if d_max <= d_min:
-    d_max = d_min + 1e-6
-
-disp_scaled = (disp_tmp - d_min) / (d_max - d_min)
-disp_scaled = np.clip(disp_scaled, 0, 1)
-
-disp_vis = np.zeros_like(disparity, dtype=np.uint8)
-valid_disp = ~np.isnan(disp_tmp)
-disp_vis[valid_disp] = (disp_scaled[valid_disp] * 255).astype(np.uint8)
-
-disparity_color = cv2.applyColorMap(disp_vis, cv2.COLORMAP_JET)
-
-# -----------------------------
-# 6. depth 시각화
-# 가까울수록 빨강 / 멀수록 파랑
-# -----------------------------
-depth_vis = np.zeros_like(depth_map, dtype=np.uint8)
-
-if np.any(valid_mask):
-    depth_valid = depth_map[valid_mask]
-
-    z_min = np.percentile(depth_valid, 5)
-    z_max = np.percentile(depth_valid, 95)
-
-    if z_max <= z_min:
-        z_max = z_min + 1e-6
-
-    depth_scaled = (depth_map - z_min) / (z_max - z_min)
-    depth_scaled = np.clip(depth_scaled, 0, 1)
-
-    # depth는 클수록 멀기 때문에 반전
-    depth_scaled = 1.0 - depth_scaled
-    depth_vis[valid_mask] = (depth_scaled[valid_mask] * 255).astype(np.uint8)
-
-depth_color = cv2.applyColorMap(depth_vis, cv2.COLORMAP_JET)
-
-# -----------------------------
-# 7. Left / Right 이미지에 ROI 표시
-# -----------------------------
-left_vis = left_color.copy()
-right_vis = right_color.copy()
-
-for name, (x, y, w, h) in rois.items():
-    cv2.rectangle(left_vis, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    cv2.putText(left_vis, name, (x, y - 8),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-    cv2.rectangle(right_vis, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    cv2.putText(right_vis, name, (x, y - 8),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-# -----------------------------
-# 8. 저장
-# -----------------------------
-cv2.imwrite(str(output_dir / "left_roi.png"), left_vis)
-cv2.imwrite(str(output_dir / "right_roi.png"), right_vis)
-cv2.imwrite(str(output_dir / "disparity_map.png"), disparity_color)
-cv2.imwrite(str(output_dir / "depth_map.png"), depth_color)
-
-print("\n이미지 저장 완료 (outputs 폴더)")
-
-# -----------------------------
-# 9. 시각화
-# -----------------------------
-combined_img = np.hstack((left_vis, disparity_color))
-
-cv2.namedWindow('Original vs Disparity Map', cv2.WINDOW_NORMAL)
-cv2.imshow('Original vs Disparity Map', combined_img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+if __name__ == '__main__':
+    main()
 ```
 
 </details>
 
 * **주요 결과물:**
-<img width="293" height="155" alt="image" src="https://github.com/user-attachments/assets/e8e311e4-4a99-4315-adae-354cef75adcc" />
-<img width="1919" height="1029" alt="image" src="https://github.com/user-attachments/assets/b77ca0e7-35b1-4ef9-890e-821c3f641e51" />
 
